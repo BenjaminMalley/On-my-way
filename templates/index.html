@@ -10,6 +10,11 @@ body {
 #map_canvas {
 	height: 100%;
 }
+#destination_form {
+	position: absolute;
+	left: 20px;
+	top: 20px;
+	z-index: 1;
 </style>
 <script type='text/javascript'>
 
@@ -20,28 +25,46 @@ $(document).ready(function() {
 		alert(error); // change this to update and animate a div
 	};
 	
-	var show_map = function(lat, lng, z) {
+	var show_map = function(position, z) {
 		var map = new google.maps.Map($('#map_canvas')[0], {
-			center: new google.maps.LatLng(lat, lng),
+			center: position,
 			zoom: z,
 			mapTypeId: google.maps.MapTypeId.ROADMAP
 		});
 		var marker = new google.maps.Marker({
-			position: new google.maps.LatLng(lat, lng),
+			position: position,
 			map: map,
 			title: 'Here you are'
 		});
 	};
 	
-	var update_location = function() { // get geolocation and update map
+	var get_route = function(pos, dest) {
+		var directionsService = new google.maps.DirectionsService();
+		directionsService.route({
+			origin: pos,
+			destination: dest,
+			travelMode: google.maps.TravelMode.DRIVING
+		}, function(result, status) {
+			if (status == google.maps.DirectionsStatus.OK) {
+				alert(result.routes[0].legs[0].duration.text);
+				//for (var leg in result.routes[0].legs) {
+				//	alert(leg.duration.text);
+				//}
+			} else {
+				flash_error('Bad response from Google');
+			}
+		});
+	};
+	
+	var update_location = function(destination) { // get geolocation and update map
 		if (!!navigator.geolocation) { // geolocation supported
 			navigator.geolocation.watchPosition( function(p) {
-				show_map(p.coords.latitude, p.coords.longitude, 8);
+				get_route(new google.maps.LatLng(p.coords.latitude, p.coords.longitude), destination); 
 			}, function(e) {
 				if (e.code == 1) {
-						flash_error('You must allow location sharing.');
+					flash_error('You must allow location sharing.');
 				} else {
-						flash_error('Could not identify position.');
+					flash_error('Could not identify position.');
 				}
 			});
 		} else { // geolocation not supported
@@ -49,13 +72,21 @@ $(document).ready(function() {
 		}
 	};
 	
-
-	
-	update_location();
+	$('input[name="destination_bar"]').keypress( function(e) {
+		if (e.which == 13) { // user has pressed enter
+			e.preventDefault();
+			update_location($(this).val());
+		}
+	});
 
 });
 </script>
 {% endblock %}
 {% block body %}
 <div id='map_canvas'></div>
+<div id='destination_form'>
+	<form>
+		<input name='destination_bar' placeholder='Where are you headed?'>
+	</form>
+</div>
 {% endblock %}
