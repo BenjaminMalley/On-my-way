@@ -1,20 +1,42 @@
 {% extends "base.html" %}
 {% block head %}
+<style type='text/css'>
+html {
+	height: 100%;
+}
+body {
+	height: 100%;
+}
+#map_canvas {
+	height: 100%;
+}
+</style>
 <script type='text/javascript'>
 
 
 $(document).ready(function() {
-	var position = new Object;
 	
 	var flash_error = function(error) {
 		alert(error); // change this to update and animate a div
 	};
 	
-	var update_location = function() {
+	var show_map = function(lat, lng, z) {
+		var map = new google.maps.Map($('#map_canvas')[0], {
+			center: new google.maps.LatLng(lat, lng),
+			zoom: z,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		});
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(lat, lng),
+			map: map,
+			title: 'Here you are'
+		});
+	};
+	
+	var update_location = function() { // get geolocation and update map
 		if (!!navigator.geolocation) { // geolocation supported
-			navigator.geolocation.getCurrentPosition( function(p) {
-				position.latitude = p.coords.latitude;
-				position.longitude = p.coords.longitude;
+			navigator.geolocation.watchPosition( function(p) {
+				show_map(p.coords.latitude, p.coords.longitude, 8);
 			}, function(e) {
 				if (e.code == 1) {
 						flash_error('You must allow location sharing.');
@@ -27,10 +49,13 @@ $(document).ready(function() {
 		}
 	};
 	
-	var get_map = function(location) {
-		return(0);
-	};
+
+	
+	update_location();
 
 });
 </script>
+{% endblock %}
+{% block body %}
+<div id='map_canvas'></div>
 {% endblock %}
