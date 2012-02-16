@@ -20,6 +20,7 @@ body {
 
 
 $(document).ready(function() {
+	var position_watcher;
 	
 	var flash_error = function(error) {
 		alert(error); // change this to update and animate a div
@@ -46,10 +47,7 @@ $(document).ready(function() {
 			travelMode: google.maps.TravelMode.DRIVING
 		}, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
-				alert(result.routes[0].legs[0].duration.text);
-				//for (var leg in result.routes[0].legs) {
-				//	alert(leg.duration.text);
-				//}
+				duration = result.routes[0].legs[0].duration.value;
 			} else {
 				flash_error('Bad response from Google');
 			}
@@ -58,7 +56,7 @@ $(document).ready(function() {
 	
 	var update_location = function(destination) { // get geolocation and update map
 		if (!!navigator.geolocation) { // geolocation supported
-			navigator.geolocation.watchPosition( function(p) {
+			position_watcher = navigator.geolocation.watchPosition( function(p) {
 				get_route(new google.maps.LatLng(p.coords.latitude, p.coords.longitude), destination); 
 			}, function(e) {
 				if (e.code == 1) {
