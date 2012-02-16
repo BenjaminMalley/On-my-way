@@ -1,4 +1,36 @@
 {% extends "base.html" %}
-{% block body %}
-<p>HELLO!</p>
+{% block head %}
+<script type='text/javascript'>
+
+
+$(document).ready(function() {
+	var position = new Object;
+	
+	var flash_error = function(error) {
+		alert(error); // change this to update and animate a div
+	};
+	
+	var update_location = function() {
+		if (!!navigator.geolocation) { // geolocation supported
+			navigator.geolocation.getCurrentPosition( function(p) {
+				position.latitude = p.coords.latitude;
+				position.longitude = p.coords.longitude;
+			}, function(e) {
+				if (e.code == 1) {
+						flash_error('You must allow location sharing.');
+				} else {
+						flash_error('Could not identify position.');
+				}
+			});
+		} else { // geolocation not supported
+			flash_error('Geolocation not supported by this browser');
+		}
+	};
+	
+	var get_map = function(location) {
+		return(0);
+	};
+
+});
+</script>
 {% endblock %}
