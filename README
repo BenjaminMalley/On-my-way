@@ -1,9 +1,9 @@
 On my way is an HTML5 trip-based location sharing application for Twitter intended for use on mobile devices.
 1. Authorize access to your Twitter account by clicking the "Begin" button.
-2. Begin a new trip by specifying a destination in the destination bar.  On my way sends out a tweet from your account containing URL for your followers to track your progress towards the destination and see your estimated arrival time.
+2. Begin a new trip by specifying a destination in the destination bar.  On my way sends out a tweet from your account containing a URL for your followers to track your progress and see your estimated arrival time.
 3. Drive!  When you arrive, On my way sends out another Tweet letting your followers know you've arrived and stops tracking your location.
 
 This is an application prototype.  It currently makes a couple of assumptions about you that may change as the prototype is refined:
 
-1. That your want your location to be publically shared for the duration of the trip.
+1. That your want your location to be publicly shared for the duration of the trip.
 2. That you are driving to your destination.
