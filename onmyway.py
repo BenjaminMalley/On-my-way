@@ -8,8 +8,6 @@ from urllib import urlencode
 app = Flask(__name__)
 app.secret_key = config.consumer_key
 app.consumer = oauth.Consumer(key=config.consumer_key, secret=config.consumer_secret)
-app.cache = redis.StrictRedis(host=config.redis_host,
-	port=config.redis_port, db=config.redis_db)
 
 def verify_response(resp):
 	if resp['status'] != '200':
@@ -37,7 +35,7 @@ def index():
 		
 		session['access_token'] = dict(urlparse.parse_qsl(content))
 
-		if app.cache.get(session['access_token']['screen_name']) == None:
+		if session['access_token']['screen_name'] == None:
 			
 			token = oauth.Token(key=session['access_token']['oauth_token'],
 				secret=session['access_token']['oauth_token_secret'])
@@ -61,7 +59,16 @@ def authorize():
 	return redirect('{0}?oauth_token={1}'.format(config.auth_url+'authorize',
 							session['request_token']['oauth_token']))
 
-
+@app.route('/route/', methods=['POST',])
+def route():
+	if session['access_token'] != None:
+		user = session['access_token']['screen_name']
+		for key in ('lat', 'lng', 'dest', 'dur'):
+			print request.form[key]
+			session[key] = request.form[key]
+		return 'OK'
+	else:
+		return make_response('You must have a valid session to complete this request.', 401)
 
 if __name__ == '__main__':
 	app.run(debug=True)

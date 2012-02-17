@@ -13,9 +13,10 @@ body {
 }
 #destination_form {
 	position: absolute;
-	left: 20px;
-	top: 20px;
+	bottom: 0px;
 	z-index: 1;
+	width: 100%;
+	padding: 10px;
 </style>
 
 <script type='text/javascript' src='https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false'></script>
@@ -24,22 +25,23 @@ body {
 
 $(document).ready(function() {
 	var position_watcher;
-	
+	var directionsDisplay;
+	var map;
+	var map_initialized = false;
+
 	var flash_error = function(error) {
 		alert(error); // change this to update and animate a div
 	};
 	
-	var show_map = function(position, z) {
-		var map = new google.maps.Map($('#map_canvas')[0], {
+	var initialize_map = function(position, z) {
+		directionsDisplay = new google.maps.DirectionsRenderer();
+		map = new google.maps.Map($('#map_canvas')[0], {
 			center: position,
 			zoom: z,
 			mapTypeId: google.maps.MapTypeId.ROADMAP
 		});
-		var marker = new google.maps.Marker({
-			position: position,
-			map: map,
-			title: 'Here you are'
-		});
+		directionsDisplay.setMap(map);
+		map_initialized = true;
 	};
 	
 	var get_route = function(pos, dest) {
@@ -50,7 +52,22 @@ $(document).ready(function() {
 			travelMode: google.maps.TravelMode.DRIVING
 		}, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
-				duration = result.routes[0].legs[0].duration.value;
+				$.post('/route/', { // update the server
+					lat: pos.lat(),
+					lng: pos.lng(),
+					dest: dest,
+					dur: result.routes[0].legs[0].duration.value
+				});
+				if (!map_initialized) {
+					initialize_map(pos, 8);
+					directionsDisplay.setDirections(result);
+				} else {
+					var marker = new google.maps.Marker({
+						position: pos,
+						map: map,
+						title: 'Here you are'
+					});
+				}
 			} else {
 				flash_error('Bad response from Google');
 			}
@@ -85,7 +102,7 @@ $(document).ready(function() {
 {% endblock %}
 {% block body %}
 <div id='map_canvas'></div>
-<div id='destination_form'>
+<div id='destination_form' align='center'>
 	<form>
 		<input name='destination_bar' placeholder='Where are you headed?'>
 	</form>
