@@ -15,6 +15,7 @@ app.cache = redis.StrictRedis(
 	port=6379,
 	db=0)
 
+site_url = 'http://127.0.0.1:5000/'
 
 def verify_response(resp):
 	if resp['status'] != '200':
@@ -51,7 +52,7 @@ def authorize():
 
 	client = oauth.Client(app.consumer)
 	resp, content = client.request(config.auth_url+'request_token', 'POST',
-							body=urlencode({'oauth_callback': config.site_url+url_for('index')}))
+							body=urlencode({'oauth_callback': site_url+url_for('index')}))
 	print '/authorize/'
 	print content
 	verify_response(resp)
@@ -78,9 +79,8 @@ def route():
 			oauth.Token(key=session['access_token']['oauth_token'],
 			secret=session['access_token']['oauth_token_secret']))
 		resp, content = client.request(config.tweet_url, 'POST', body=urlencode({
-			'status': 'Hello http://google.com',
-			#'status': "I started a trip! Track my progress at {0}track/{1}".format(
-			#config.site_url, user),
+			'status': "I started a trip! Track my progress at {0}track/{1}".format(
+			site_url, user),
 		}))
 
 		print 'access token'
