@@ -11,9 +11,9 @@ app = Flask(__name__)
 app.secret_key = config.consumer_key
 app.consumer = oauth.Consumer(key=config.consumer_key, secret=config.consumer_secret)
 app.cache = redis.StrictRedis(
-	host=config.redis_host,
-	port=config.redis_port,
-	db=config.redis_db)
+	host='localhost',
+	port=6379,
+	db=0)
 
 
 def verify_response(resp):

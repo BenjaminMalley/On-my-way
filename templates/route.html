@@ -28,6 +28,7 @@ $(document).ready(function() {
 	var directionsDisplay;
 	var map;
 	var map_initialized = false;
+	var marker;
 
 	var flash_error = function(error) {
 		alert(error); // change this to update and animate a div
@@ -43,41 +44,56 @@ $(document).ready(function() {
 		directionsDisplay.setMap(map);
 		map_initialized = true;
 	};
+
+	var update_server = function(pos, dest, dur) {
+		$.post('/route/', { // update the server
+			lat: pos.lat(),
+			lng: pos.lng(),
+			dest: dest,
+			dur: dur 
+		});
+	};
 	
-	var get_route = function(pos, dest) {
-		var directionsService = new google.maps.DirectionsService();
-		directionsService.route({
-			origin: pos,
-			destination: dest,
-			travelMode: google.maps.TravelMode.DRIVING
-		}, function(result, status) {
-			if (status == google.maps.DirectionsStatus.OK) {
-				$.post('/route/', { // update the server
-					lat: pos.lat(),
-					lng: pos.lng(),
-					dest: dest,
-					dur: result.routes[0].legs[0].duration.value
-				});
-				if (!map_initialized) {
+	var update_route = function(pos, dest) {
+		if (!map_initialized) { // first update, get and render directions
+			var directionsService = new google.maps.DirectionsService();
+			directionsService.route({
+				origin: pos,
+				destination: dest,
+				travelMode: google.maps.TravelMode.DRIVING
+			}, function(result, status) {
+				if (status == google.maps.DirectionsStatus.OK) {
+					update_server(pos, dest, result.routes[0].legs[0].duration.value);
 					initialize_map(pos, 8);
 					directionsDisplay.setDirections(result);
-				} else {
-					var marker = new google.maps.Marker({
+					marker = new google.maps.Marker({
 						position: pos,
 						map: map,
 						title: 'Here you are'
 					});
+				} else {
+					flash_error('Bad response from Google');
 				}
-			} else {
-				flash_error('Bad response from Google');
-			}
-		});
+			});
+		} else {
+			marker.setPosition(pos);
+			var distMatrixSvc = new google.maps.DistanceMatrixService();
+			distMatrixSvc.getDistanceMatrix({
+				origins: [pos],
+				destinations: [dest],
+				travelMode: google.maps.TravelMode.DRIVING
+			}, function(result, status) {
+				if (status == google.maps.DistanceMatrixStatus.OK) {
+					update_server(pos, dest, result.rows[0].duration);
+				}
+			});
+		}
 	};
 	
 	var update_location = function(destination) { // get geolocation and update map
 		if (!!navigator.geolocation) { // geolocation supported
 			position_watcher = navigator.geolocation.watchPosition( function(p) {
-				get_route(new google.maps.LatLng(p.coords.latitude, p.coords.longitude), destination); 
+				update_route(new google.maps.LatLng(p.coords.latitude, p.coords.longitude), destination); 
 			}, function(e) {
 				if (e.code == 1) {
 					flash_error('You must allow location sharing.');
