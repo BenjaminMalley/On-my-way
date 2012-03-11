@@ -1,34 +1,12 @@
 {% extends "base.html" %}
 {% block head %}
-
-<style type='text/css'>
-html {
-	height: 100%;
-}
-body {
-	height: 100%;
-}
-#map_canvas {
-	height: 100%;
-}
-#destination_form {
-	position: absolute;
-	bottom: 0px;
-	z-index: 1;
-	width: 100%;
-	padding: 10px;
-</style>
-
 <script type='text/javascript' src='https://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false'></script>
 <script type='text/javascript'>
-
-
 $(document).ready(function() {
 	var position_watcher;
 	var directionsDisplay;
 	var map;
 	var map_initialized = false;
-	var marker;
 
 	var flash_error = function(error) {
 		alert(error); // change this to update and animate a div
@@ -36,7 +14,7 @@ $(document).ready(function() {
 	
 	var initialize_map = function(position, z) {
 		directionsDisplay = new google.maps.DirectionsRenderer();
-		map = new google.maps.Map($('#map_canvas')[0], {
+		map = new google.maps.Map($('#map-canvas')[0], {
 			center: position,
 			zoom: z,
 			mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -44,56 +22,41 @@ $(document).ready(function() {
 		directionsDisplay.setMap(map);
 		map_initialized = true;
 	};
-
-	var update_server = function(pos, dest, dur) {
-		$.post('/route/', { // update the server
-			lat: pos.lat(),
-			lng: pos.lng(),
-			dest: dest,
-			dur: dur 
-		});
-	};
 	
-	var update_route = function(pos, dest) {
-		if (!map_initialized) { // first update, get and render directions
-			var directionsService = new google.maps.DirectionsService();
-			directionsService.route({
-				origin: pos,
-				destination: dest,
-				travelMode: google.maps.TravelMode.DRIVING
-			}, function(result, status) {
-				if (status == google.maps.DirectionsStatus.OK) {
-					update_server(pos, dest, result.routes[0].legs[0].duration.value);
+	var get_route = function(pos, dest) {
+		var directionsService = new google.maps.DirectionsService();
+		directionsService.route({
+			origin: pos,
+			destination: dest,
+			travelMode: google.maps.TravelMode.DRIVING
+		}, function(result, status) {
+			if (status == google.maps.DirectionsStatus.OK) {
+				$.post('/route/', { // update the server
+					lat: pos.lat(),
+					lng: pos.lng(),
+					dest: dest,
+					dur: result.routes[0].legs[0].duration.value
+				});
+				if (!map_initialized) {
 					initialize_map(pos, 8);
 					directionsDisplay.setDirections(result);
-					marker = new google.maps.Marker({
+				} else {
+					var marker = new google.maps.Marker({
 						position: pos,
 						map: map,
 						title: 'Here you are'
 					});
-				} else {
-					flash_error('Bad response from Google');
 				}
-			});
-		} else {
-			marker.setPosition(pos);
-			var distMatrixSvc = new google.maps.DistanceMatrixService();
-			distMatrixSvc.getDistanceMatrix({
-				origins: [pos],
-				destinations: [dest],
-				travelMode: google.maps.TravelMode.DRIVING
-			}, function(result, status) {
-				if (status == google.maps.DistanceMatrixStatus.OK) {
-					update_server(pos, dest, result.rows[0].duration);
-				}
-			});
-		}
+			} else {
+				flash_error('Bad response from Google');
+			}
+		});
 	};
 	
 	var update_location = function(destination) { // get geolocation and update map
 		if (!!navigator.geolocation) { // geolocation supported
 			position_watcher = navigator.geolocation.watchPosition( function(p) {
-				update_route(new google.maps.LatLng(p.coords.latitude, p.coords.longitude), destination); 
+				get_route(new google.maps.LatLng(p.coords.latitude, p.coords.longitude), destination); 
 			}, function(e) {
 				if (e.code == 1) {
 					flash_error('You must allow location sharing.');
@@ -106,21 +69,101 @@ $(document).ready(function() {
 		}
 	};
 	
-	$('input[name="destination_bar"]').keypress( function(e) {
+	$('input[name="destination-bar"]').keypress( function(e) {
 		if (e.which == 13) { // user has pressed enter
 			e.preventDefault();
 			update_location($(this).val());
 		}
 	});
 
+	
+	var scale_fonts = function() {
+		$('.search-bar').css('font-size', (350 * ($(window).height() / 704)) + '%');
+	};
+	
+	$(window).resize(function() { scale_fonts(); });
+	
+	scale_fonts();
+	
+	$('.view-switcher').on('click', function() {
+		$(this).hide();
+		if($(this).attr('id')==='directions-button') {
+			$('#map-button').show();
+		} else {
+			$('#directions-button').show();
+		}
+	});
 });
 </script>
 {% endblock %}
 {% block body %}
-<div id='map_canvas'></div>
-<div id='destination_form' align='center'>
-	<form>
-		<input name='destination_bar' placeholder='Where are you headed?'>
-	</form>
+<div id='map-canvas' class='view'></div>
+<div id='nav' class='full-width'>
+	<div class='nav-item nav-first'>
+		<svg width="100%" height="100%" viewBox="0 0 30 30">
+		  <g transform="translate(-210,-432.36466)">
+			 <g
+				 transform="matrix(0.19354839,0,0,0.19354839,181.45161,360.77595)"
+				 style="fill:none;stroke:#ffff00;stroke-width:25;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none">
+				<path
+					d="m 290,447.36218 c 0,35.89851 -29.10149,65 -65,65 -35.89851,0 -65,-29.10149 -65,-65 0,-35.89851 29.10149,-65 65,-65 35.89851,0 65,29.10149 65,65 z"
+					style="opacity:1;fill:none;stroke:#ffffff;stroke-width:25;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+				<path
+					d="m 180,492.36218 90,-90" style="fill:none;stroke:#ffffff;stroke-width:25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+			 </g>
+		  </g>
+		</svg>
+	</div>
+	
+	<div id='search-container' class='nav-item'>
+		<input name='destination-bar' class='destination-bar' placeholder="Where are you headed?">
+	</div>
+	<div id='map-button' class='nav-item view-switcher'>
+		<svg width="100%" height="100%" viewBox="0 0 272 272">
+		  <g transform="translate(-154,-246.375)">
+			 <rect
+				 width="260"
+				 height="260"
+				 x="160"
+				 y="252.36218" style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:1.6" />
+			 <path
+				 d="m 180,472.36218 c 0,-80 60,-100 80,-100 18.47444,0 28.41626,4.26631 37.70723,8.85805 10.8254,5.35008 20.76721,11.14195 42.29277,11.14195 20,0 60,-20 60,-100"  style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:20, 20;stroke-dashoffset:13" />
+		  </g>
+		</svg>
+	</div>
+	<div id='directions-button' class='nav-item view-switcher'>
+		<svg width="100%" height="100%" viewBox="0 0 30 30">
+		  <g transform="translate(-167.73869,-257.35286)">
+			 <g transform="matrix(0.18126875,0,0,0.1875,149.62314,221.29427)">
+				<rect
+					width="40"
+					height="40"
+					x="100"
+					y="192.36218"
+					style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+				<rect
+					width="40"
+					height="40"
+					x="100"
+					y="252.36218"
+					style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+				<rect
+					width="40"
+					height="40"
+					x="100"
+					y="312.36218"
+					style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+				<path
+					d="m 160,212.36218 100,0"        style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:11;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+				<path
+					d="m 160,272.36218 100,0"        style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:11;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+				<path
+					d="m 160,332.36218 100,0"        style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:11;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+			 </g>
+		  </g>
+		</svg>
+	</div>
+	
+
 </div>
 {% endblock %}
